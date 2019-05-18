@@ -1,0 +1,258 @@
+<html lang="ua">
+<head>
+    <title>Master Pavliuk</title>
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+          crossorigin="anonymous">
+</head>
+<style>
+    table td {
+        padding: 5px 10px;
+    }
+
+    table td input {
+        font-size: 20px;
+        width: 100px;
+    }
+
+    .dot-location-label {
+        background: #dadada;
+        font-size: 20pt;
+        border: 1px solid darkgrey;
+        padding: 3px 10px;
+        border-radius: 5px;
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+</style>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-3">
+            <div id="info-block">
+                <span class="dot-location-label"></span>
+                <h4 id="r-squared-element"></h4>
+                <table id="table" class="table table-striped table-bordered table-hover table-sm">
+                    <thead>
+                    <tr>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-6">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div class="col-3"></div>
+    </div>
+</div>
+
+<script src="./math.js"></script>
+<script src="./renderer.js"></script>
+
+<script>
+    let globalData = {
+            canvas: {
+                element: null
+            },
+            height: null,
+            width: null,
+            events: {
+                _subscribes: {},
+                subscribe(eventName, onEventCallback, callbackContext) {
+                    let callbackMetaData = {
+                        onEventCallback,
+                        callbackContext
+                    };
+                    if (this._subscribes.hasOwnProperty(eventName)) {
+                        this._subscribes[eventName].push(callbackMetaData);
+                    } else {
+                        this._subscribes[eventName] = [callbackMetaData];
+                    }
+                },
+                emit(eventName) {
+                    if (!this._subscribes.hasOwnProperty(eventName))
+                        return false;
+
+                    this._subscribes[eventName].map(subscriber => subscriber.onEventCallback.call(subscriber.callbackContext || this));
+                }
+            },
+            dots: [],
+            rSquared: null
+        },
+        showData = {
+            info() {
+                let infoBlockElement = document.getElementById('info-block');
+
+                infoBlockElement.style.display = globalData.dots.length > 0 ? 'block' : 'none';
+            },
+            table() {
+                let tableElement = document.getElementById('table').getElementsByTagName('tbody')[0];
+                tableElement.innerHTML = '';
+
+                globalData.dots.forEach((point, index) => {
+                    let row = document.createElement('tr'),
+                        xCell = document.createElement('td'),
+                        xInput = document.createElement('input'),
+                        yCell = document.createElement('td'),
+                        yInput = document.createElement('input'),
+                        deleteCell = document.createElement('td'),
+                        deleteButton = document.createElement('button');
+
+                    xInput.value = point.x;
+                    xInput.type = 'number';
+                    xInput.addEventListener('input', e => {
+                        globalData.dots[index].x = Number(e.target.value) || 0;
+                        globalData.events.emit('refreshClientData');
+                    });
+                    xCell.appendChild(xInput);
+                    row.appendChild(xCell);
+
+                    yInput.value = point.y;
+                    yInput.type = 'number';
+                    yInput.addEventListener('input', e => {
+                        globalData.dots[index].y = Number(e.target.value) || 0;
+                        globalData.events.emit('refreshClientData');
+                    });
+                    yCell.appendChild(yInput);
+                    row.appendChild(yCell);
+
+                    deleteButton.innerText = 'X';
+                    deleteButton.className = 'btn';
+                    deleteButton.addEventListener('click', () => {
+                        globalData.dots.splice(index, 1);
+                        globalData.events.emit('refreshClientData');
+                    });
+                    deleteCell.appendChild(deleteButton);
+                    row.appendChild(deleteCell);
+
+                    tableElement.appendChild(row);
+                });
+            },
+            rSquared() {
+                let rSquaredElement = document.getElementById('r-squared-element');
+
+                rSquaredElement.innerHTML = 'R<sup>2</sup> = ' + globalData.rSquared;
+            }
+        };
+
+    globalData.canvas.element = document.getElementById('canvas');
+    globalData.canvas.context = globalData.canvas.element.getContext('2d');
+    globalData.height = 600;
+    globalData.width = 600;
+    globalData.unit = 20;
+    globalData.canvas.element.height = globalData.height;
+    globalData.canvas.element.width = globalData.width;
+
+    let mathModule = getMath();
+    let rendererModule = getRenderer(globalData);
+
+    // globalData.dots = [{
+    //     x: 0,
+    //     y: 1
+    // }, {
+    //     x: 1,
+    //     y: 0.891
+    // }, {
+    //     x: 3,
+    //     y: 0.708
+    // }, {
+    //     x: 5,
+    //     y: 0.562
+    // }, {
+    //     x: 7,
+    //     y: 0.447
+    // }, {
+    //     x: 9,
+    //     y: 0.355
+    // }];
+
+
+    globalData.events.subscribe('refreshClientData', () => {
+        globalData.rSquared = mathModule.regressions.rSquare(globalData.dots);
+
+        rendererModule.draw.clearCanvas();
+        rendererModule.draw.mapNet();
+        rendererModule.draw.arrows();
+
+        let lineData = mathModule.regressions.linear(globalData.dots);
+        let expData = mathModule.regressions.exponential(globalData.dots);
+
+        rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+        rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+
+        rendererModule.draw.dots(globalData.dots);
+
+        showData.table();
+        showData.rSquared();
+        showData.info();
+    });
+
+    globalData.events.emit('refreshClientData');
+
+    globalData.canvas.element.addEventListener('mousemove', e => {
+        globalData.canvas.mousePosition = {
+            x: e.offsetX,
+            y: e.offsetY
+        };
+
+        let dotLocationLabelElement = document.getElementsByClassName('dot-location-label')[0];
+
+        let pointToCheck = rendererModule.calculation.convert.toGraphUnits({
+            x: globalData.canvas.mousePosition.x,
+            y: globalData.canvas.mousePosition.y
+        });
+
+        let isCursorOverAnyDot = false;
+        globalData.dots.forEach(dot => {
+            let circle = {
+                x: dot.x,
+                y: dot.y,
+                radius: 5 / globalData.unit
+            };
+
+            if (rendererModule.calculation.circle.isInside(pointToCheck, circle)) {
+                dotLocationLabelElement.innerHTML = `(${dot.x}; ${dot.y})`;
+
+                isCursorOverAnyDot = true;
+                globalData.canvas.element.style.cursor = 'pointer';
+                dotLocationLabelElement.style.display = 'inline';
+                dotLocationLabelElement.style.top = e.y - 5 + 'px';
+                dotLocationLabelElement.style.left = e.x + 10 + 'px';
+            }
+        });
+
+        if (!isCursorOverAnyDot) {
+            globalData.canvas.element.style.cursor = 'auto';
+            dotLocationLabelElement.style.display = 'none';
+        }
+    });
+
+    globalData.canvas.element.addEventListener('click', e => {
+        let dotPosition = rendererModule.calculation.convert.toGraphUnits({
+            x: e.offsetX,
+            y: e.offsetY
+        });
+
+        dotPosition = {
+            x: mathModule.round(dotPosition.x, 3),
+            y: mathModule.round(dotPosition.y, 3),
+            color: rendererModule.calculation.color.getRandom()
+        };
+
+        globalData.dots.push(dotPosition);
+        rendererModule.draw.dots(globalData.dots);
+
+        globalData.events.emit('refreshClientData');
+    });
+</script>
+</body>
+
+</html>
