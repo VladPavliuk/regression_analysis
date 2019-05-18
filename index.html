@@ -68,8 +68,8 @@
     </div>
 </div>
 
-<script src="./math.js"></script>
-<script src="./renderer.js"></script>
+<script src="/math.js"></script>
+<script src="/renderer.js"></script>
 
 <script>
     let globalData = {
@@ -303,41 +303,33 @@
             mouseMoved = true;
         }
 
-        if (mousePressed && Number.isInteger(clickedDotIndex)) {
+        if (mousePressed) {
             let dotPosition = rendererModule.calculation.convert.toGraphUnits({
                 x: e.offsetX,
                 y: e.offsetY
             });
 
-            let isAnyDotHasBeenClicked = false;
-            globalData.dots.forEach((dot, index) => {
-                let circle = {
-                    x: dot.x,
-                    y: dot.y,
-                    radius: 6 / globalData.unit
-                };
+            if (Number.isInteger(clickedDotIndex)) {
+                dotPosition.x =  mathModule.round(dotPosition.x, 3);
+                dotPosition.y =  mathModule.round(dotPosition.y, 3);
 
-                if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
-                    isAnyDotHasBeenClicked = true;
-                    clickedDotIndex = index;
-                }
-            });
+                globalData.canvas.element.style.cursor = 'move';
+                globalData.dots[clickedDotIndex] = {...globalData.dots[clickedDotIndex], ...dotPosition};
+            } else {
+                globalData.dots.forEach((dot, index) => {
+                    let circle = {
+                        x: dot.x,
+                        y: dot.y,
+                        radius: 6 / globalData.unit
+                    };
 
-            if (isAnyDotHasBeenClicked) {
-                let dotNewPosition = rendererModule.calculation.convert.toGraphUnits({
-                    x: e.offsetX,
-                    y: e.offsetY
+                    if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                        clickedDotIndex = index;
+                    }
                 });
-
-                dotNewPosition = {
-                    ...dotNewPosition,
-                    x: mathModule.round(dotPosition.x, 3),
-                    y: mathModule.round(dotPosition.y, 3)
-                };
-
-                globalData.dots[clickedDotIndex] = {...globalData.dots[clickedDotIndex], ...dotNewPosition};
-                globalData.events.emit('refreshClientData');
             }
+
+            globalData.events.emit('refreshClientData');
         }
     });
 
