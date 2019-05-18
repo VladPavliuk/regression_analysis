@@ -104,25 +104,19 @@ let getRenderer = globalConfigs => {
         lineGraph(slope, intercept, configs) {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
-            configs.color = configs.color || 'blue';
+            configs.color = configs.color || 'black';
 
-            let canvasEdges = calculation.convert.getCanvasEdgesInGraphUnits();
+            let points = calculation.getPointsListByGraph(-20, 20, 0.1, x => slope * x + intercept);
 
-            let points = calculation.convert.toScreenUnits([{
-                x: (canvasEdges.topRight.y - intercept) / slope,
-                y: slope * canvasEdges.topRight.x + intercept
-            }, {
-                x: (canvasEdges.bottomLeft.y - intercept) / slope,
-                y: slope * canvasEdges.bottomLeft.x + intercept
-            }]);
+            // let points = calculation.convert.toScreenUnits([{
+            //     x: (canvasEdges.topRight.y - intercept) / slope,
+            //     y: slope * canvasEdges.topRight.x + intercept
+            // }, {
+            //     x: (canvasEdges.bottomLeft.y - intercept) / slope,
+            //     y: slope * canvasEdges.bottomLeft.x + intercept
+            // }]);
 
-            globalConfigs.canvas.context.lineWidth = configs.thickness;
-            globalConfigs.canvas.context.strokeStyle = configs.color;
-            globalConfigs.canvas.context.beginPath();
-            globalConfigs.canvas.context.moveTo(points[0].x, points[0].y);
-            globalConfigs.canvas.context.lineTo(points[1].x, points[1].y);
-            globalConfigs.canvas.context.closePath();
-            globalConfigs.canvas.context.stroke();
+            draw.curveLine(points);
         },
         curveLine(dots, configs) {
             configs = configs || {};

@@ -18,7 +18,8 @@
 
     .dot-location-label {
         background: #dadada;
-        font-size: 20pt;
+        font-size: 16pt;
+        z-index: 1;
         border: 1px solid darkgrey;
         padding: 3px 10px;
         border-radius: 5px;
@@ -30,6 +31,19 @@
 </style>
 <body>
 <div class="container-fluid">
+    <div class="row">
+        <div class="col-6">
+            <div>
+                <input id="show-linear-graph-checkbox" type="checkbox" checked>
+                <span>Show linear graph?</span>
+            </div>
+            <div>
+                <input id="show-exponential-graph-checkbox" type="checkbox" checked>
+                <span>Show exponential graph?</span>
+            </div>
+        </div>
+    </div>
+    <hr>
     <div class="row">
         <div class="col-3">
             <div id="info-block">
@@ -64,6 +78,10 @@
             },
             height: null,
             width: null,
+            configs: {
+                showLinearGraphCheckbox: true,
+                showExponentialGraphCheckbox: true
+            },
             events: {
                 _subscribes: {},
                 subscribe(eventName, onEventCallback, callbackContext) {
@@ -185,8 +203,13 @@
         let lineData = mathModule.regressions.linear(globalData.dots);
         let expData = mathModule.regressions.exponential(globalData.dots);
 
-        rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
-        rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+        if (globalData.configs.showLinearGraphCheckbox) {
+            rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+        }
+
+        if (globalData.configs.showExponentialGraphCheckbox) {
+            rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+        }
 
         rendererModule.draw.dots(globalData.dots);
 
@@ -196,6 +219,22 @@
     });
 
     globalData.events.emit('refreshClientData');
+
+    (function addEventsToOptionElements() {
+        let showExponentialGraphCheckbox = document.getElementById('show-exponential-graph-checkbox');
+        let showLinearGraphCheckbox = document.getElementById('show-linear-graph-checkbox');
+
+        showExponentialGraphCheckbox.addEventListener('click', e => {
+            globalData.configs.showExponentialGraphCheckbox = e.target.checked;
+            globalData.events.emit('refreshClientData');
+        });
+
+        showLinearGraphCheckbox.addEventListener('click', e => {
+            globalData.configs.showLinearGraphCheckbox = e.target.checked;
+            globalData.events.emit('refreshClientData');
+        });
+    })();
+
 
     globalData.canvas.element.addEventListener('mousemove', e => {
         globalData.canvas.mousePosition = {
@@ -215,7 +254,7 @@
             let circle = {
                 x: dot.x,
                 y: dot.y,
-                radius: 5 / globalData.unit
+                radius: 6 / globalData.unit
             };
 
             if (rendererModule.calculation.circle.isInside(pointToCheck, circle)) {
@@ -235,23 +274,116 @@
         }
     });
 
-    globalData.canvas.element.addEventListener('click', e => {
+    let clickedDotIndex = null;
+    let mousePressed = false;
+    let mouseMoved = false;
+    globalData.canvas.element.addEventListener("mousedown", e => {
+        mousePressed = true;
+
         let dotPosition = rendererModule.calculation.convert.toGraphUnits({
             x: e.offsetX,
             y: e.offsetY
         });
 
-        dotPosition = {
-            x: mathModule.round(dotPosition.x, 3),
-            y: mathModule.round(dotPosition.y, 3),
-            color: rendererModule.calculation.color.getRandom()
-        };
+        globalData.dots.forEach((dot, index) => {
+            let circle = {
+                x: dot.x,
+                y: dot.y,
+                radius: 6 / globalData.unit
+            };
 
-        globalData.dots.push(dotPosition);
-        rendererModule.draw.dots(globalData.dots);
+            if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                clickedDotIndex = index;
+            }
+        });
+    }, false);
 
-        globalData.events.emit('refreshClientData');
+    globalData.canvas.element.addEventListener('mousemove', e => {
+        if (mousePressed) {
+            mouseMoved = true;
+        }
+
+        if (mousePressed && Number.isInteger(clickedDotIndex)) {
+            let dotPosition = rendererModule.calculation.convert.toGraphUnits({
+                x: e.offsetX,
+                y: e.offsetY
+            });
+
+            let isAnyDotHasBeenClicked = false;
+            globalData.dots.forEach((dot, index) => {
+                let circle = {
+                    x: dot.x,
+                    y: dot.y,
+                    radius: 6 / globalData.unit
+                };
+
+                if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                    isAnyDotHasBeenClicked = true;
+                    clickedDotIndex = index;
+                }
+            });
+
+            if (isAnyDotHasBeenClicked) {
+                let dotNewPosition = rendererModule.calculation.convert.toGraphUnits({
+                    x: e.offsetX,
+                    y: e.offsetY
+                });
+
+                dotNewPosition = {
+                    ...dotNewPosition,
+                    x: mathModule.round(dotPosition.x, 3),
+                    y: mathModule.round(dotPosition.y, 3)
+                };
+
+                globalData.dots[clickedDotIndex] = {...globalData.dots[clickedDotIndex], ...dotNewPosition};
+                globalData.events.emit('refreshClientData');
+            }
+        }
     });
+
+    globalData.canvas.element.addEventListener("mouseup", e => {
+        clickedDotIndex = false;
+
+        if (mousePressed && !mouseMoved) {
+            let dotPosition = rendererModule.calculation.convert.toGraphUnits({
+                x: e.offsetX,
+                y: e.offsetY
+            });
+
+            let isAnyDotHasBeenClicked = false;
+            globalData.dots.forEach((dot, index) => {
+                let circle = {
+                    x: dot.x,
+                    y: dot.y,
+                    radius: 6 / globalData.unit
+                };
+
+                if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                    isAnyDotHasBeenClicked = true;
+                    globalData.dots.splice(index, 1);
+                }
+            });
+
+            if (isAnyDotHasBeenClicked) {
+                globalData.events.emit('refreshClientData');
+                return;
+            }
+
+            dotPosition = {
+                x: mathModule.round(dotPosition.x, 3),
+                y: mathModule.round(dotPosition.y, 3),
+                color: rendererModule.calculation.color.getRandom()
+            };
+
+            globalData.dots.push(dotPosition);
+            rendererModule.draw.dots(globalData.dots);
+
+            globalData.events.emit('refreshClientData');
+        }
+
+        mousePressed = false;
+        mouseMoved = false;
+    }, false);
 </script>
 </body>
 
