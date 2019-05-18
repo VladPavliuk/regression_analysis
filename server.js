@@ -4,7 +4,9 @@ var http = require('http');
 
 var staticServe = function (req, res) {
     var fileLoc = path.normalize(req.url).replace(/^(\.\.[\/\\])+/, '');
-    console.log(fileLoc);
+    if (fileLoc == '/')
+        fileLoc = '/index.html';
+
     fs.readFile(__dirname + fileLoc, function (err, data) {
         if (err) {
             res.writeHead(404, 'Not Found');
