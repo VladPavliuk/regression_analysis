@@ -57,9 +57,9 @@ let getMath = () => {
     };
 
     let getMatrixDeterminant = matrix => {
+        return mathLib.det(matrix);
         let indexes = (new Array(matrix.length)).fill(0).map((item, index) => index);
         let indexesCombinations = getCombinations(indexes);
-
         let sum = 0;
 
         for (let i = 0; i < indexesCombinations.length; i++) {
@@ -97,7 +97,7 @@ let getMath = () => {
         let matrixVectorCombinations = getMatrixVectorCombinations(matrix, vector);
         let solution = [];
         let delta = getMatrixDeterminant(matrix);
-
+        
         for (let i = 0; i < matrixVectorCombinations.length; i++) {
             solution.push(getMatrixDeterminant(matrixVectorCombinations[i]) / delta);
         }
@@ -110,34 +110,34 @@ let getMath = () => {
         let differentiations = new Array(degree + 1).fill([]);
 
         points.forEach(point => {
-            let data = [point.y];
+            let data = [];
 
             for (let i = 1; i <= degree; i++) {
-                data.push(-Math.pow(point.x, i))
+                data.push(Math.pow(point.x, i));
             }
 
-            data.push(-1);
+            data.push(1);
+            data.push(-point.y);
 
             for (let i = 0; i <= degree; i++) {
-                differentiations[i] = data.map(item => 2 * data[i + 1] * item);
+                differentiations[i] = data.map(item => 2 * data[i] * item);
             }
-
+            
             for (let i = 0; i < differentiations.length; i++) {
                 sum[i] = sum[i].map((x, index) => x + differentiations[i][index]);
             }
         });
 
         let vector = [];
-
         for (let i = 0; i < sum.length; i++) {
-            vector.push(-sum[i][0]);
+            vector.push(-sum[i][sum[i].length - 1]);
         }
 
         let matrix = [];
         for (let i = 0; i < sum.length; i++) {
-            matrix.push(sum[i].slice(1, sum[i].length));
+            matrix.push(sum[i].slice(0, sum[i].length - 1));
         }
-
+        
         return getEquationsSystemSolution(matrix, vector);
     };
 

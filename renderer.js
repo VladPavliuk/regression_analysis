@@ -110,7 +110,7 @@ let getRenderer = globalConfigs => {
                 let sum = 0;
 
                 for (let i = 0; i < coefficients.length; i++) {
-                    sum += Math.pow(coefficients[i] * x, coefficients.length - i);
+                    sum += coefficients[i] * Math.pow(x, coefficients.length - i);
                 }
 
                 return sum + intercept
@@ -136,7 +136,7 @@ let getRenderer = globalConfigs => {
         },
         curveLine(dots, configs) {
             configs = configs || {};
-            globalConfigs.canvas.context.fillStyle = configs.color || 'black';
+            globalConfigs.canvas.context.strokeStyle = configs.color || 'red';
 
             let convertedDots = dots.map(dot => ({...dot, ...calculation.convert.toScreenUnits(dot)}));
 
