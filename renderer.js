@@ -105,8 +105,11 @@ let getRenderer = globalConfigs => {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
             configs.color = configs.color || 'black';
+            configs.drawFrom = configs.drawFrom || -globalConfigs.width / globalConfigs.unit;
+            configs.drawTo = configs.drawTo || globalConfigs.width / globalConfigs.unit;
+            configs.step = configs.step || 0.3;
 
-            let points = calculation.getPointsListByGraph(-20, 20, 0.1, x => {
+            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, x => {
                 let sum = 0;
 
                 for (let i = 0; i < coefficients.length; i++) {
@@ -121,8 +124,11 @@ let getRenderer = globalConfigs => {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
             configs.color = configs.color || 'black';
+            configs.drawFrom = configs.drawFrom || -20;
+            configs.drawTo = configs.drawTo || 20;
+            configs.step = configs.step || 0.3;
 
-            let points = calculation.getPointsListByGraph(-20, 20, 0.1, x => slope * x + intercept);
+            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, x => slope * x + intercept);
 
             // let points = calculation.convert.toScreenUnits([{
             //     x: (canvasEdges.topRight.y - intercept) / slope,
@@ -138,7 +144,10 @@ let getRenderer = globalConfigs => {
             configs = configs || {};
             globalConfigs.canvas.context.strokeStyle = configs.color || 'red';
 
-            let convertedDots = dots.map(dot => ({...dot, ...calculation.convert.toScreenUnits(dot)}));
+            let convertedDots = dots.map(dot => ({
+                ...dot,
+                ...calculation.convert.toScreenUnits(dot)
+            }));
 
             globalConfigs.canvas.context.moveTo(convertedDots[0].x, convertedDots[0].y);
             globalConfigs.canvas.context.beginPath();
@@ -154,7 +163,10 @@ let getRenderer = globalConfigs => {
             configs.color = configs.color || calculation.color.getRandom();
             configs.thickness = configs.thickness || 10;
 
-            let convertedDots = dots.map(dot => ({...dot, ...calculation.convert.toScreenUnits(dot)}));
+            let convertedDots = dots.map(dot => ({
+                ...dot,
+                ...calculation.convert.toScreenUnits(dot)
+            }));
 
             convertedDots.forEach(dot => {
                 if (!dot.color) {
