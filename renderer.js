@@ -101,6 +101,22 @@ let getRenderer = globalConfigs => {
     };
 
     let draw = {
+        polynomialGraph(coefficients, intercept, configs) {
+            configs = configs || {};
+            configs.thickness = configs.thickness || 2;
+            configs.color = configs.color || 'black';
+
+            let points = calculation.getPointsListByGraph(-20, 20, 0.1, x => {
+                let sum = 0;
+
+                for (let i = 0; i < coefficients.length; i++) {
+                    sum += Math.pow(coefficients[i] * x, coefficients.length - i);
+                }
+
+                return sum + intercept
+            });
+            draw.curveLine(points);
+        },
         lineGraph(slope, intercept, configs) {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
@@ -188,6 +204,11 @@ let getRenderer = globalConfigs => {
 
             for (let i = 0; i * configs.measure <= globalConfigs.height; i++) {
                 globalConfigs.canvas.context.fillRect(0, i * configs.measure, globalConfigs.width, configs.thickness);
+            }
+        },
+        zoom(value, zoomPoint) {
+            if (globalConfigs.unit + value >= 5 && globalConfigs.unit + value <= 100) {
+                globalConfigs.unit += value;
             }
         }
     };

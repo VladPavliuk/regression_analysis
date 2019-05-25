@@ -38,7 +38,7 @@
                 <span>Show linear graph?</span>
             </div>
             <div>
-                <input id="show-exponential-graph-checkbox" type="checkbox" checked>
+                <input id="show-exponential-graph-checkbox" type="checkbox">
                 <span>Show exponential graph?</span>
             </div>
         </div>
@@ -80,7 +80,7 @@
             width: null,
             configs: {
                 showLinearGraphCheckbox: true,
-                showExponentialGraphCheckbox: true
+                showExponentialGraphCheckbox: false
             },
             events: {
                 _subscribes: {},
@@ -172,25 +172,13 @@
     let mathModule = getMath();
     let rendererModule = getRenderer(globalData);
 
-    // globalData.dots = [{
-    //     x: 0,
-    //     y: 1
-    // }, {
-    //     x: 1,
-    //     y: 0.891
-    // }, {
-    //     x: 3,
-    //     y: 0.708
-    // }, {
-    //     x: 5,
-    //     y: 0.562
-    // }, {
-    //     x: 7,
-    //     y: 0.447
-    // }, {
-    //     x: 9,
-    //     y: 0.355
-    // }];
+    globalData.dots = [{
+        x: 3,
+        y: 1
+    }, {
+        x: 5,
+        y: 2
+    }];
 
 
     globalData.events.subscribe('refreshClientData', () => {
@@ -200,17 +188,23 @@
         rendererModule.draw.mapNet();
         rendererModule.draw.arrows();
 
-        let lineData = mathModule.regressions.linear(globalData.dots);
-        let expData = mathModule.regressions.exponential(globalData.dots);
+        if (globalData.dots.length >= 2) {
+            let polynomialData = mathModule.regressions.polynomial(globalData.dots, 1);
+            // debugger
+            // console.log(polynomialData);
+            let lineData = mathModule.regressions.linear(globalData.dots);
+            let expData = mathModule.regressions.exponential(globalData.dots);
 
-        if (globalData.configs.showLinearGraphCheckbox) {
-            rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+            console.log(polynomialData);
+            if (globalData.configs.showLinearGraphCheckbox) {
+                rendererModule.draw.polynomialGraph(polynomialData.coefficients, polynomialData.intercept);
+                // rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+            }
+
+            if (globalData.configs.showExponentialGraphCheckbox) {
+                rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+            }
         }
-
-        if (globalData.configs.showExponentialGraphCheckbox) {
-            rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
-        }
-
         rendererModule.draw.dots(globalData.dots);
 
         showData.table();
@@ -331,6 +325,11 @@
 
             globalData.events.emit('refreshClientData');
         }
+    });
+
+    globalData.canvas.element.addEventListener("wheel", e => {
+        rendererModule.draw.zoom((e.deltaY < 0 ? -1 : 1) * Math.min(1, Math.abs(e.deltaY)));
+        globalData.events.emit('refreshClientData');
     });
 
     globalData.canvas.element.addEventListener("mouseup", e => {
