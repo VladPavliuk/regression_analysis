@@ -60,7 +60,10 @@
             </div>
             <div class="col-6">
                 <canvas id="canvas"></canvas>
-                <div class="col-6 mt-4">
+                <div class="col-10 mt-4">
+                    <div>
+                        <span id="linear-graph-equation-label"></span>
+                    </div>
                     <div>
                         <input id="show-linear-graph-checkbox" type="checkbox" checked>
                         <span>Show linear graph?</span>
@@ -92,12 +95,16 @@
     <script src="/datasets.js"></script>
 
     <script>
+        let mathModule = getMath();
         let globalData = {
                 canvas: {
                     element: null
                 },
                 height: null,
                 width: null,
+                equations: {
+                    linear: null
+                },
                 configs: {
                     polynomialDegree: 1,
                     showLinearGraphCheckbox: true,
@@ -136,6 +143,25 @@
                 options() {
                     let polynomialGraphDegreeLabel = document.getElementById('polynomial-graph-degree-label');
                     polynomialGraphDegreeLabel.innerHTML = 'Degree = ' + globalData.configs.polynomialDegree;
+
+                    if (globalData.equations.linear) {
+                        let linearGraphEquation = document.getElementById('linear-graph-equation-label');
+                        globalData.equations.linear.coefficients
+
+                        linearGraphEquation.innerHTML = '';
+
+                        let coefficients = globalData.equations.linear.coefficients;
+                        coefficients.forEach((coefficient, index) => {
+                            let slope = mathModule.round(coefficient, 5);
+                            let sign = index !== 0 ? `${slope >= 0 ? '+' : '-'}` : '';
+
+                            linearGraphEquation.innerHTML +=
+                                `${index === 0 ? sign + ' ' : sign}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
+                        });
+
+                        let intercept = mathModule.round(globalData.equations.linear.intercept, 5);
+                        linearGraphEquation.innerHTML += `${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept)}`;
+                    }
                 },
                 dotsList() {
                     let dotsListElement = document.getElementById('dots-list').getElementsByTagName('tbody')[0];
@@ -231,7 +257,6 @@
         globalData.canvas.element.height = globalData.height;
         globalData.canvas.element.width = globalData.width;
 
-        let mathModule = getMath();
         let rendererModule = getRenderer(globalData);
 
         globalData.events.subscribe('refreshClientData', () => {
@@ -242,15 +267,15 @@
             rendererModule.draw.arrows();
 
             if (globalData.dots.length >= 2) {
-
-                let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs
-                    .polynomialDegree);
-
                 let lineData = mathModule.regressions.linear(globalData.dots);
                 let expData = mathModule.regressions.exponential(globalData.dots);
 
                 if (globalData.configs.showLinearGraphCheckbox) {
+                    let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs
+                        .polynomialDegree);
+
                     rendererModule.draw.polynomialGraph(polynomialData.coefficients, polynomialData.intercept);
+                    globalData.equations.linear = polynomialData;
                     // rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
                 }
 
@@ -326,7 +351,7 @@
 
                     isCursorOverAnyDot = true;
                     globalData.canvas.element.style.cursor = 'pointer';
-                    dotLocationLabelElement.style.display = 'inline';       
+                    dotLocationLabelElement.style.display = 'inline';
                 }
             });
 
