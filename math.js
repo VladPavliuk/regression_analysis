@@ -97,7 +97,7 @@ let getMath = () => {
         let matrixVectorCombinations = getMatrixVectorCombinations(matrix, vector);
         let solution = [];
         let delta = getMatrixDeterminant(matrix);
-        
+
         for (let i = 0; i < matrixVectorCombinations.length; i++) {
             solution.push(getMatrixDeterminant(matrixVectorCombinations[i]) / delta);
         }
@@ -122,7 +122,7 @@ let getMath = () => {
             for (let i = 0; i <= degree; i++) {
                 differentiations[i] = data.map(item => 2 * data[i] * item);
             }
-            
+
             for (let i = 0; i < differentiations.length; i++) {
                 sum[i] = sum[i].map((x, index) => x + differentiations[i][index]);
             }
@@ -137,8 +137,18 @@ let getMath = () => {
         for (let i = 0; i < sum.length; i++) {
             matrix.push(sum[i].slice(0, sum[i].length - 1));
         }
-        
+
         return getEquationsSystemSolution(matrix, vector);
+    };
+
+    math.calculatePolynomialFunction = (coefficients, intercept, x) => {
+        let functionValue = intercept;
+
+        coefficients.forEach((coefficient, index) => {
+            functionValue += coefficient * Math.pow(x, coefficients.length - index);
+        });
+
+        return functionValue;
     };
 
 
@@ -200,39 +210,27 @@ let getMath = () => {
         }
     };
 
-    math.regressions.rSquare = dots => {
-        let regressionLine = math.regressions.linear(dots);
+    math.regressions.standardError = (dots, regressionFunction) => {
+        if (dots.length <= 2) return false;
 
-        if (regressionLine === false)
-            return false;
+        let errorsSum = 0;
 
-        let yAverage = math.getAverage(dots.map(dot => dot.y));
+        dots.forEach(dot => errorsSum += Math.pow(regressionFunction(dot.x) - dot.y, 2));
 
-        let dotsData = dots.map(dot => Object.assign(dot, {
-            yDistance: dot.y - yAverage,
-        }));
+        return Math.sqrt(errorsSum / (dots.length - 2));
+    };
 
-        dotsData = dotsData.map(dot => Object.assign(dot, {
-            yDistanceSquared: Math.pow(dot.yDistance, 2)
-        }));
+    math.regressions.rSquare = (dots, regressionFunction) => {
+        if (dots.length <= 1) return false;
 
-        let sumOfYDistancesSquared = dotsData.reduce((accumulator, dot) => accumulator + dot.yDistanceSquared, 0);
+        let meanOfRealValues = dots.reduce((acc, current) => acc + current.y, 0) / dots.length;
+        let meanAndRealValuesDifference = dots.reduce((acc, current) => acc + Math.pow(current.y - meanOfRealValues, 2), 0);
 
-        dotsData = dotsData.map(dot => Object.assign(dot, {
-            functionValue: dot.x * regressionLine.slope + regressionLine.intercept
-        }));
+        let meanOfPredictedValues = dots.reduce((acc, current) => acc + regressionFunction(current.x), 0) / dots.length;
+        let meanAndPredictedValuesDifference
+            = dots.reduce((acc, current) => acc + Math.pow(regressionFunction(current.x) - meanOfPredictedValues, 2), 0);
 
-        dotsData = dotsData.map(dot => Object.assign(dot, {
-            functionValueYAndYDistance: dot.functionValue - yAverage
-        }));
-
-        dotsData = dotsData.map(dot => Object.assign(dot, {
-            functionValueYAndYDistanceSquared: Math.pow(dot.functionValueYAndYDistance, 2)
-        }));
-
-        let sumOfFunctionValueYAndYDistanceSquared = dotsData.reduce((accumulator, dot) => accumulator + dot.functionValueYAndYDistanceSquared, 0);
-
-        return sumOfFunctionValueYAndYDistanceSquared / sumOfYDistancesSquared;
+        return meanAndPredictedValuesDifference / meanAndRealValuesDifference;
     };
 
     return math;

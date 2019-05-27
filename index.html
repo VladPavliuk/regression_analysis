@@ -3,7 +3,7 @@
 <head>
     <title>Master Pavliuk</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <style>
     table td {
@@ -30,414 +30,405 @@
 </style>
 
 <body>
-    <div class="container-fluid mt-2">
-        <div class="row">
-            <div class="col-12">
-                <button class="btn btn-secondary" onclick="globalData.clearDots()">Empty</button>
-                <button class="btn btn-secondary" onclick="loadDataset(0)">Dataset 1</button>
-                <button class="btn btn-secondary" onclick="loadDataset(1)">Dataset 2</button>
-                <button class="btn btn-secondary" onclick="loadDataset(2)">Dataset 3</button>
-            </div>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-3">
-                <div id="info-block">
-                    <span class="dot-location-label"></span>
-                    <h4 id="r-squared-element"></h4>
-                    <h4 id="dots-amount-element"></h4>
-                    <table id="dots-list" class="table table-striped table-bordered table-hover table-sm">
-                        <thead>
-                            <tr>
-                                <th>X</th>
-                                <th>Y</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="col-6">
-                <canvas id="canvas"></canvas>
-                <div class="col-10 mt-4">
-                    <div>
-                        <span id="linear-graph-equation-label"></span>
-                    </div>
-                    <div>
-                        <input id="show-linear-graph-checkbox" type="checkbox" checked>
-                        <span>Show linear graph?</span>
-                    </div>
-                    <div>
-                        <div class="form-group">
-                            <label id="polynomial-graph-degree-label" for="polynomial-graph-degree">Degree = 0</label>
-                            <input type="range" class="form-control-range" id="polynomial-graph-degree" min="1" max="5"
-                                value="1">
-                        </div>
-                    </div>
-                    <hr>
-                    <div>
-                        <input id="show-exponential-graph-checkbox" type="checkbox">
-                        <span>Show exponential graph?</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-3"></div>
+<div class="container-fluid mt-2">
+    <div class="row">
+        <div class="col-12">
+            <button class="btn btn-secondary" onclick="globalData.clearDots()">Empty</button>
+            <button class="btn btn-secondary" onclick="loadDataset(0)">Dataset 1</button>
+            <button class="btn btn-secondary" onclick="loadDataset(1)">Dataset 2</button>
+            <button class="btn btn-secondary" onclick="loadDataset(2)">Dataset 3</button>
         </div>
     </div>
+    <hr>
+    <div class="row">
+        <div class="col-3">
+            <div id="info-block">
+                <span class="dot-location-label"></span>
+                <h4 id="standard-error-element"></h4>
+                <h4 id="r-squared-element"></h4>
+                <hr>
+                <h4 id="dots-amount-element"></h4>
+                <table id="dots-list" class="table table-striped table-bordered table-hover table-sm">
+                    <thead>
+                    <tr>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="col-6">
+            <canvas id="canvas"></canvas>
+            <div class="col-10 mt-4">
+                <div>
+                    <span id="linear-graph-equation-label"></span>
+                </div>
+                <div>
+                    <input id="show-linear-graph-checkbox" type="checkbox" checked>
+                    <span>Show linear graph?</span>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label id="polynomial-graph-degree-label" for="polynomial-graph-degree">Degree = 0</label>
+                        <input type="range" class="form-control-range" id="polynomial-graph-degree" min="1" max="5"
+                               value="1">
+                    </div>
+                </div>
+                <hr>
+                <div>
+                    <input id="show-exponential-graph-checkbox" type="checkbox">
+                    <span>Show exponential graph?</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-3"></div>
+    </div>
+</div>
 
-    <script src="/_math_lib.js"></script>
-    <script>
-        var mathLib = math;
-    </script>
-    <script src="/math.js"></script>
-    <script src="/renderer.js"></script>
-    <script src="/datasets.js"></script>
+<script src="/_math_lib.js"></script>
+<script>
+    var mathLib = math;
+</script>
+<script src="/math.js"></script>
+<script src="/renderer.js"></script>
+<script src="/datasets.js"></script>
 
-    <script>
-        let mathModule = getMath();
-        let globalData = {
-                canvas: {
-                    element: null
-                },
-                height: null,
-                width: null,
-                equations: {
-                    linear: null
-                },
-                configs: {
-                    polynomialDegree: 1,
-                    showLinearGraphCheckbox: true,
-                    showExponentialGraphCheckbox: false
-                },
-                events: {
-                    _subscribes: {},
-                    subscribe(eventName, onEventCallback, callbackContext) {
-                        let callbackMetaData = {
-                            onEventCallback,
-                            callbackContext
-                        };
-                        if (this._subscribes.hasOwnProperty(eventName)) {
-                            this._subscribes[eventName].push(callbackMetaData);
-                        } else {
-                            this._subscribes[eventName] = [callbackMetaData];
-                        }
-                    },
-                    emit(eventName) {
-                        if (!this._subscribes.hasOwnProperty(eventName))
-                            return false;
-
-                        this._subscribes[eventName].map(subscriber => subscriber.onEventCallback.call(subscriber
-                            .callbackContext || this));
-                    }
-                },
-                dots: [],
-                rSquared: null
+<script>
+    let mathModule = getMath();
+    let globalData = {
+            canvas: {
+                element: null
             },
-            showData = {
-                info() {
-                    let infoBlockElement = document.getElementById('info-block');
-
-                    infoBlockElement.style.display = globalData.dots.length > 0 ? 'block' : 'none';
-                },
-                options() {
-                    let polynomialGraphDegreeLabel = document.getElementById('polynomial-graph-degree-label');
-                    polynomialGraphDegreeLabel.innerHTML = 'Degree = ' + globalData.configs.polynomialDegree;
-
-                    if (globalData.equations.linear) {
-                        let linearGraphEquation = document.getElementById('linear-graph-equation-label');
-                        globalData.equations.linear.coefficients
-
-                        linearGraphEquation.innerHTML = '';
-
-                        let coefficients = globalData.equations.linear.coefficients;
-                        coefficients.forEach((coefficient, index) => {
-                            let slope = mathModule.round(coefficient, 5);
-                            let sign = index !== 0 ? `${slope >= 0 ? '+' : '-'}` : '';
-
-                            linearGraphEquation.innerHTML +=
-                                `${index === 0 ? sign + ' ' : sign}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
-                        });
-
-                        let intercept = mathModule.round(globalData.equations.linear.intercept, 5);
-                        linearGraphEquation.innerHTML += `${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept)}`;
+            height: null,
+            width: null,
+            equations: {
+                linear: null
+            },
+            configs: {
+                polynomialDegree: 1,
+                showLinearGraphCheckbox: true,
+                showExponentialGraphCheckbox: false
+            },
+            events: {
+                _subscribes: {},
+                subscribe(eventName, onEventCallback, callbackContext) {
+                    let callbackMetaData = {
+                        onEventCallback,
+                        callbackContext
+                    };
+                    if (this._subscribes.hasOwnProperty(eventName)) {
+                        this._subscribes[eventName].push(callbackMetaData);
+                    } else {
+                        this._subscribes[eventName] = [callbackMetaData];
                     }
                 },
-                dotsList() {
-                    let dotsListElement = document.getElementById('dots-list').getElementsByTagName('tbody')[0];
-                    let dotsAmountElement = document.getElementById('dots-amount-element');
-                    dotsAmountElement.innerHTML = globalData.dots.length + (globalData.dots.length > 1 ? ' points' :
-                        ' point');
-                    dotsListElement.innerHTML = '';
+                emit(eventName) {
+                    if (!this._subscribes.hasOwnProperty(eventName))
+                        return false;
 
-                    globalData.dots.forEach((point, index) => {
-                        let row = document.createElement('tr'),
-                            xCell = document.createElement('td'),
-                            xInput = document.createElement('input'),
-                            yCell = document.createElement('td'),
-                            yInput = document.createElement('input'),
-                            deleteCell = document.createElement('td'),
-                            deleteButton = document.createElement('button');
+                    this._subscribes[eventName].map(subscriber => subscriber.onEventCallback.call(subscriber
+                        .callbackContext || this));
+                }
+            },
+            dots: [],
+            rSquared: null,
+            standardError: null
+        },
+        showData = {
+            info() {
+                let infoBlockElement = document.getElementById('info-block');
 
-                        xInput.value = point.x;
-                        xInput.type = 'number';
-                        xInput.addEventListener('input', e => {
-                            globalData.dots[index].x = Number(e.target.value) || 0;
-                            globalData.events.emit('refreshClientData');
-                        });
-                        xCell.appendChild(xInput);
-                        row.appendChild(xCell);
+                infoBlockElement.style.display = globalData.dots.length > 0 ? 'block' : 'none';
+            },
+            options() {
+                let polynomialGraphDegreeLabel = document.getElementById('polynomial-graph-degree-label');
+                polynomialGraphDegreeLabel.innerHTML = 'Degree = ' + globalData.configs.polynomialDegree;
 
-                        yInput.value = point.y;
-                        yInput.type = 'number';
-                        yInput.addEventListener('input', e => {
-                            globalData.dots[index].y = Number(e.target.value) || 0;
-                            globalData.events.emit('refreshClientData');
-                        });
-                        yCell.appendChild(yInput);
-                        row.appendChild(yCell);
+                if (globalData.equations.linear) {
+                    let linearGraphEquation = document.getElementById('linear-graph-equation-label');
 
-                        deleteButton.innerText = 'X';
-                        deleteButton.className = 'btn';
-                        deleteButton.addEventListener('click', () => {
-                            globalData.removeDot(index);
-                            globalData.events.emit('refreshClientData');
-                        });
-                        deleteCell.appendChild(deleteButton);
-                        row.appendChild(deleteCell);
+                    linearGraphEquation.innerHTML = '';
 
-                        dotsListElement.appendChild(row);
+                    let coefficients = globalData.equations.linear.coefficients;
+                    coefficients.forEach((coefficient, index) => {
+                        let slope = mathModule.round(coefficient, 5);
+                        // let sign = index !== 0 ? `${slope >= 0 ? '+' : '-'}` : '';
+
+                        // linearGraphEquation.innerHTML +=
+                        //     `${index === 0 ? sign + ' ' : sign}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
+
+                        linearGraphEquation.innerHTML += `${slope > 0 ? '+' : '-'}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
                     });
-                },
-                rSquared() {
-                    let rSquaredElement = document.getElementById('r-squared-element');
 
-                    rSquaredElement.innerHTML = 'R<sup>2</sup> = ' + globalData.rSquared;
+                    let intercept = mathModule.round(globalData.equations.linear.intercept, 5);
+                    linearGraphEquation.innerHTML += `${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept)}`;
                 }
-            };
+            },
+            dotsList() {
+                let dotsListElement = document.getElementById('dots-list').getElementsByTagName('tbody')[0];
+                let dotsAmountElement = document.getElementById('dots-amount-element');
+                dotsAmountElement.innerHTML = globalData.dots.length + (globalData.dots.length > 1 ? ' points' :
+                    ' point');
+                dotsListElement.innerHTML = '';
 
-        globalData.events.subscribe('dotsChange', () => {
-            let dotsAmount = globalData.dots.length - 1;
+                globalData.dots.forEach((point, index) => {
+                    let row = document.createElement('tr'),
+                        xCell = document.createElement('td'),
+                        xInput = document.createElement('input'),
+                        yCell = document.createElement('td'),
+                        yInput = document.createElement('input'),
+                        deleteCell = document.createElement('td'),
+                        deleteButton = document.createElement('button');
 
-            if (dotsAmount <= 0) {
-                dotsAmount = 1;
-            }
+                    xInput.value = point.x;
+                    xInput.type = 'number';
+                    xInput.addEventListener('input', e => {
+                        globalData.dots[index].x = Number(e.target.value) || 0;
+                        globalData.events.emit('refreshClientData');
+                    });
+                    xCell.appendChild(xInput);
+                    row.appendChild(xCell);
 
-            document.getElementById('polynomial-graph-degree')
-                .max = dotsAmount;
+                    yInput.value = point.y;
+                    yInput.type = 'number';
+                    yInput.addEventListener('input', e => {
+                        globalData.dots[index].y = Number(e.target.value) || 0;
+                        globalData.events.emit('refreshClientData');
+                    });
+                    yCell.appendChild(yInput);
+                    row.appendChild(yCell);
 
-            if (globalData.configs.polynomialDegree > dotsAmount) {
-                globalData.configs.polynomialDegree = dotsAmount;
-            }
-        });
+                    deleteButton.innerText = 'X';
+                    deleteButton.className = 'btn';
+                    deleteButton.addEventListener('click', () => {
+                        globalData.removeDot(index);
+                        globalData.events.emit('refreshClientData');
+                    });
+                    deleteCell.appendChild(deleteButton);
+                    row.appendChild(deleteCell);
 
-        globalData.addDots = dots => {
-            globalData.dots.push(...dots);
-            globalData.events.emit('dotsChange');
-            globalData.events.emit('refreshClientData');
-        };
+                    dotsListElement.appendChild(row);
+                });
+            },
+            analysis() {
+                let rSquaredElement = document.getElementById('r-squared-element');
+                let standardErrorElement = document.getElementById('standard-error-element');
 
-        globalData.removeDot = index => {
-            globalData.dots.splice(index, 1);
-            globalData.events.emit('dotsChange');
-            globalData.events.emit('refreshClientData');
-        };
-
-        globalData.clearDots = () => {
-            globalData.dots = [];
-            globalData.events.emit('dotsChange');
-            globalData.events.emit('refreshClientData');
-        };
-
-        globalData.canvas.element = document.getElementById('canvas');
-        globalData.canvas.context = globalData.canvas.element.getContext('2d');
-        globalData.height = 600;
-        globalData.width = 800;
-        globalData.unit = 20;
-        globalData.canvas.element.height = globalData.height;
-        globalData.canvas.element.width = globalData.width;
-
-        let rendererModule = getRenderer(globalData);
-
-        globalData.events.subscribe('refreshClientData', () => {
-            globalData.rSquared = mathModule.regressions.rSquare(globalData.dots);
-
-            rendererModule.draw.clearCanvas();
-            rendererModule.draw.mapNet();
-            rendererModule.draw.arrows();
-
-            if (globalData.dots.length >= 2) {
-                let lineData = mathModule.regressions.linear(globalData.dots);
-                let expData = mathModule.regressions.exponential(globalData.dots);
-
-                if (globalData.configs.showLinearGraphCheckbox) {
-                    let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs
-                        .polynomialDegree);
-
-                    rendererModule.draw.polynomialGraph(polynomialData.coefficients, polynomialData.intercept);
-                    globalData.equations.linear = polynomialData;
-                    // rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+                if (globalData.standardError) {
+                    standardErrorElement.innerHTML = 'St. Error = ' + mathModule.round(globalData.standardError, 6);
+                } else {
+                    standardErrorElement.innerHTML = '';
                 }
 
-                if (globalData.configs.showExponentialGraphCheckbox) {
-                    rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+                if (globalData.rSquared) {
+                    rSquaredElement.innerHTML = 'R<sup>2</sup> = ' + mathModule.round(globalData.rSquared, 6);
+                } else {
+                    rSquaredElement.innerHTML = '';
                 }
             }
-            rendererModule.draw.dots(globalData.dots);
+        };
 
-            showData.options();
-            showData.dotsList();
-            showData.rSquared();
-            showData.info();
-        });
+    globalData.events.subscribe('dotsChange', () => {
+        let dotsAmount = globalData.dots.length - 1;
 
+        if (dotsAmount <= 0) {
+            dotsAmount = 1;
+        }
+
+        document.getElementById('polynomial-graph-degree')
+            .max = dotsAmount;
+
+        if (globalData.configs.polynomialDegree > dotsAmount) {
+            globalData.configs.polynomialDegree = dotsAmount;
+        }
+    });
+
+    globalData.addDots = dots => {
+        globalData.dots.push(...dots);
+        globalData.events.emit('dotsChange');
         globalData.events.emit('refreshClientData');
+    };
 
-        (function addEventsToManipulators() {
-            let polynomialGraphDegree = document.getElementById('polynomial-graph-degree');
+    globalData.removeDot = index => {
+        globalData.dots.splice(index, 1);
+        globalData.events.emit('dotsChange');
+        globalData.events.emit('refreshClientData');
+    };
 
-            polynomialGraphDegree.addEventListener('input', e => {
-                globalData.configs.polynomialDegree = +e.target.value;
-                globalData.events.emit('refreshClientData');
-            });
+    globalData.clearDots = () => {
+        globalData.dots = [];
+        globalData.events.emit('dotsChange');
+        globalData.events.emit('refreshClientData');
+    };
 
-        })();
+    globalData.canvas.element = document.getElementById('canvas');
+    globalData.canvas.context = globalData.canvas.element.getContext('2d');
+    globalData.height = 600;
+    globalData.width = 800;
+    globalData.unit = 20;
+    globalData.canvas.element.height = globalData.height;
+    globalData.canvas.element.width = globalData.width;
 
-        (function addEventsToOptionElements() {
-            let showExponentialGraphCheckbox = document.getElementById('show-exponential-graph-checkbox');
-            let showLinearGraphCheckbox = document.getElementById('show-linear-graph-checkbox');
+    let rendererModule = getRenderer(globalData);
 
-            showExponentialGraphCheckbox.addEventListener('click', e => {
-                globalData.configs.showExponentialGraphCheckbox = e.target.checked;
-                globalData.events.emit('refreshClientData');
-            });
+    globalData.events.subscribe('refreshClientData', () => {
+        rendererModule.draw.clearCanvas();
+        rendererModule.draw.mapNet();
+        rendererModule.draw.arrows();
 
-            showLinearGraphCheckbox.addEventListener('click', e => {
-                globalData.configs.showLinearGraphCheckbox = e.target.checked;
-                globalData.events.emit('refreshClientData');
-            });
-        })();
+        if (globalData.dots.length >= 2) {
+            // let lineData = mathModule.regressions.linear(globalData.dots);
+            let expData = mathModule.regressions.exponential(globalData.dots);
 
-        let loadDataset = datasetIndex => {
-            globalData.clearDots();
-            globalData.addDots(datasets[datasetIndex]);
+            if (globalData.configs.showLinearGraphCheckbox) {
+                let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs.polynomialDegree);
+
+                globalData.standardError = mathModule.regressions
+                    .standardError(globalData.dots, x => mathModule.calculatePolynomialFunction(
+                        polynomialData.coefficients,
+                        polynomialData.intercept,
+                        x));
+
+                globalData.rSquared = mathModule.regressions.rSquare(globalData.dots, x => mathModule.calculatePolynomialFunction(
+                    polynomialData.coefficients,
+                    polynomialData.intercept,
+                    x));
+
+                rendererModule.draw.polynomialGraph(polynomialData.coefficients, polynomialData.intercept);
+                globalData.equations.linear = polynomialData;
+                // rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
+            }
+
+            if (globalData.configs.showExponentialGraphCheckbox) {
+                rendererModule.draw.exponentialGraph(expData.alpha, expData.beta);
+            }
+        }
+        rendererModule.draw.dots(globalData.dots);
+
+        showData.options();
+        showData.dotsList();
+        showData.analysis();
+        showData.info();
+    });
+
+    globalData.events.emit('refreshClientData');
+
+    (function addEventsToManipulators() {
+        let polynomialGraphDegree = document.getElementById('polynomial-graph-degree');
+
+        polynomialGraphDegree.addEventListener('input', e => {
+            globalData.configs.polynomialDegree = +e.target.value;
+            globalData.events.emit('refreshClientData');
+        });
+
+    })();
+
+    (function addEventsToOptionElements() {
+        let showExponentialGraphCheckbox = document.getElementById('show-exponential-graph-checkbox');
+        let showLinearGraphCheckbox = document.getElementById('show-linear-graph-checkbox');
+
+        showExponentialGraphCheckbox.addEventListener('click', e => {
+            globalData.configs.showExponentialGraphCheckbox = e.target.checked;
+            globalData.events.emit('refreshClientData');
+        });
+
+        showLinearGraphCheckbox.addEventListener('click', e => {
+            globalData.configs.showLinearGraphCheckbox = e.target.checked;
+            globalData.events.emit('refreshClientData');
+        });
+    })();
+
+    let loadDataset = datasetIndex => {
+        globalData.clearDots();
+        globalData.addDots(datasets[datasetIndex]);
+    };
+
+    globalData.canvas.element.addEventListener('mousemove', e => {
+        globalData.canvas.mousePosition = {
+            x: e.offsetX,
+            y: e.offsetY
         };
 
-        globalData.canvas.element.addEventListener('mousemove', e => {
-            globalData.canvas.mousePosition = {
-                x: e.offsetX,
-                y: e.offsetY
+        let dotLocationLabelElement = document.getElementsByClassName('dot-location-label')[0];
+        dotLocationLabelElement.style.top = e.y - 50 + 'px';
+        dotLocationLabelElement.style.left = e.x + 30 + 'px';
+
+        let pointToCheck = rendererModule.calculation.convert.toGraphUnits({
+            x: globalData.canvas.mousePosition.x,
+            y: globalData.canvas.mousePosition.y
+        });
+
+        let isCursorOverAnyDot = false;
+        globalData.dots.forEach(dot => {
+            let circle = {
+                x: dot.x,
+                y: dot.y,
+                radius: 6 / globalData.unit
             };
 
-            let dotLocationLabelElement = document.getElementsByClassName('dot-location-label')[0];
-            dotLocationLabelElement.style.top = e.y - 50 + 'px';
-            dotLocationLabelElement.style.left = e.x + 30 + 'px';
+            if (rendererModule.calculation.circle.isInside(pointToCheck, circle)) {
+                dotLocationLabelElement.innerHTML = `(${dot.x}; ${dot.y})`;
 
-            let pointToCheck = rendererModule.calculation.convert.toGraphUnits({
-                x: globalData.canvas.mousePosition.x,
-                y: globalData.canvas.mousePosition.y
-            });
-
-            let isCursorOverAnyDot = false;
-            globalData.dots.forEach(dot => {
-                let circle = {
-                    x: dot.x,
-                    y: dot.y,
-                    radius: 6 / globalData.unit
-                };
-
-                if (rendererModule.calculation.circle.isInside(pointToCheck, circle)) {
-                    dotLocationLabelElement.innerHTML = `(${dot.x}; ${dot.y})`;
-
-                    isCursorOverAnyDot = true;
-                    globalData.canvas.element.style.cursor = 'pointer';
-                    dotLocationLabelElement.style.display = 'inline';
-                }
-            });
-
-            if (!isCursorOverAnyDot) {
-                globalData.canvas.element.style.cursor = 'auto';
-                dotLocationLabelElement.style.display = 'none';
+                isCursorOverAnyDot = true;
+                globalData.canvas.element.style.cursor = 'pointer';
+                dotLocationLabelElement.style.display = 'inline';
             }
         });
 
-        let clickedDotIndex = null;
-        let mousePressed = false;
-        let mouseMoved = false;
-        globalData.canvas.element.addEventListener("mousedown", e => {
-            mousePressed = true;
+        if (!isCursorOverAnyDot) {
+            globalData.canvas.element.style.cursor = 'auto';
+            dotLocationLabelElement.style.display = 'none';
+        }
+    });
 
+    let clickedDotIndex = null;
+    let mousePressed = false;
+    let mouseMoved = false;
+    globalData.canvas.element.addEventListener("mousedown", e => {
+        mousePressed = true;
+
+        let dotPosition = rendererModule.calculation.convert.toGraphUnits({
+            x: e.offsetX,
+            y: e.offsetY
+        });
+
+        globalData.dots.forEach((dot, index) => {
+            let circle = {
+                x: dot.x,
+                y: dot.y,
+                radius: 6 / globalData.unit
+            };
+
+            if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                clickedDotIndex = index;
+            }
+        });
+    }, false);
+
+    globalData.canvas.element.addEventListener('mousemove', e => {
+        if (mousePressed) {
+            mouseMoved = true;
+        }
+
+        if (mousePressed) {
             let dotPosition = rendererModule.calculation.convert.toGraphUnits({
                 x: e.offsetX,
                 y: e.offsetY
             });
 
-            globalData.dots.forEach((dot, index) => {
-                let circle = {
-                    x: dot.x,
-                    y: dot.y,
-                    radius: 6 / globalData.unit
+            if (Number.isInteger(clickedDotIndex)) {
+                dotPosition.x = mathModule.round(dotPosition.x, 3);
+                dotPosition.y = mathModule.round(dotPosition.y, 3);
+
+                globalData.canvas.element.style.cursor = 'move';
+                globalData.dots[clickedDotIndex] = {
+                    ...globalData.dots[clickedDotIndex],
+                    ...dotPosition
                 };
-
-                if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
-                    clickedDotIndex = index;
-                }
-            });
-        }, false);
-
-        globalData.canvas.element.addEventListener('mousemove', e => {
-            if (mousePressed) {
-                mouseMoved = true;
-            }
-
-            if (mousePressed) {
-                let dotPosition = rendererModule.calculation.convert.toGraphUnits({
-                    x: e.offsetX,
-                    y: e.offsetY
-                });
-
-                if (Number.isInteger(clickedDotIndex)) {
-                    dotPosition.x = mathModule.round(dotPosition.x, 3);
-                    dotPosition.y = mathModule.round(dotPosition.y, 3);
-
-                    globalData.canvas.element.style.cursor = 'move';
-                    globalData.dots[clickedDotIndex] = {
-                        ...globalData.dots[clickedDotIndex],
-                        ...dotPosition
-                    };
-                } else {
-                    globalData.dots.forEach((dot, index) => {
-                        let circle = {
-                            x: dot.x,
-                            y: dot.y,
-                            radius: 6 / globalData.unit
-                        };
-
-                        if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
-                            clickedDotIndex = index;
-                        }
-                    });
-                }
-
-                globalData.events.emit('refreshClientData');
-            }
-        });
-
-        globalData.canvas.element.addEventListener("wheel", e => {
-            rendererModule.draw.zoom((e.deltaY < 0 ? -1 : 1) * Math.min(1, Math.abs(e.deltaY)));
-            globalData.events.emit('refreshClientData');
-        });
-
-        globalData.canvas.element.addEventListener("mouseup", e => {
-            clickedDotIndex = false;
-
-            if (mousePressed && !mouseMoved) {
-                let dotPosition = rendererModule.calculation.convert.toGraphUnits({
-                    x: e.offsetX,
-                    y: e.offsetY
-                });
-
-                let isAnyDotHasBeenClicked = false;
+            } else {
                 globalData.dots.forEach((dot, index) => {
                     let circle = {
                         x: dot.x,
@@ -446,32 +437,64 @@
                     };
 
                     if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
-                        isAnyDotHasBeenClicked = true;
-                        globalData.removeDot(index);
+                        clickedDotIndex = index;
                     }
                 });
-
-                if (isAnyDotHasBeenClicked) {
-                    globalData.events.emit('refreshClientData');
-                    return;
-                }
-
-                dotPosition = {
-                    x: mathModule.round(dotPosition.x, 3),
-                    y: mathModule.round(dotPosition.y, 3),
-                    color: rendererModule.calculation.color.getRandom()
-                };
-
-                globalData.addDots([dotPosition]);
-                rendererModule.draw.dots(globalData.dots);
-
-                globalData.events.emit('refreshClientData');
             }
 
-            mousePressed = false;
-            mouseMoved = false;
-        }, false);
-    </script>
+            globalData.events.emit('refreshClientData');
+        }
+    });
+
+    globalData.canvas.element.addEventListener("wheel", e => {
+        rendererModule.draw.zoom((e.deltaY < 0 ? -1 : 1) * Math.min(1, Math.abs(e.deltaY)));
+        globalData.events.emit('refreshClientData');
+    });
+
+    globalData.canvas.element.addEventListener("mouseup", e => {
+        clickedDotIndex = false;
+
+        if (mousePressed && !mouseMoved) {
+            let dotPosition = rendererModule.calculation.convert.toGraphUnits({
+                x: e.offsetX,
+                y: e.offsetY
+            });
+
+            let isAnyDotHasBeenClicked = false;
+            globalData.dots.forEach((dot, index) => {
+                let circle = {
+                    x: dot.x,
+                    y: dot.y,
+                    radius: 6 / globalData.unit
+                };
+
+                if (rendererModule.calculation.circle.isInside(dotPosition, circle)) {
+                    isAnyDotHasBeenClicked = true;
+                    globalData.removeDot(index);
+                }
+            });
+
+            if (isAnyDotHasBeenClicked) {
+                globalData.events.emit('refreshClientData');
+                return;
+            }
+
+            dotPosition = {
+                x: mathModule.round(dotPosition.x, 3),
+                y: mathModule.round(dotPosition.y, 3),
+                color: rendererModule.calculation.color.getRandom()
+            };
+
+            globalData.addDots([dotPosition]);
+            rendererModule.draw.dots(globalData.dots);
+
+            globalData.events.emit('refreshClientData');
+        }
+
+        mousePressed = false;
+        mouseMoved = false;
+    }, false);
+</script>
 </body>
 
 </html>
