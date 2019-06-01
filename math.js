@@ -35,7 +35,7 @@ let getMath = () => {
     };
 
     let getFactorial = number => {
-        if (number === 1)
+        if (number === 0)
             return 1;
         return number * getFactorial(number - 1);
     };
@@ -151,6 +151,14 @@ let getMath = () => {
         return functionValue;
     };
 
+    math.taylorSeries = (derivatives, a) => {
+        let taylorPolynomial = [];
+
+        derivatives.forEach((derivative, index) => taylorPolynomial.push(
+            x => derivative(a) * Math.pow(x - a, index) / getFactorial(index)));
+
+        return x => taylorPolynomial.reduce((acc, polynomialItem) => acc + polynomialItem(x), 0);
+    };
 
     math.regressions = {
         polynomial(dots, degree) {

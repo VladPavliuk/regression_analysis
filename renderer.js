@@ -1,4 +1,4 @@
-let getRenderer = globalConfigs => {
+let getRenderer = (globalConfigs, mathModule) => {
     let requires =
         globalConfigs.height &&
         globalConfigs.width &&
@@ -6,6 +6,8 @@ let getRenderer = globalConfigs => {
         globalConfigs.canvas &&
         globalConfigs.canvas.element &&
         globalConfigs.canvas.context;
+
+    globalConfigs.defaultUnit = globalConfigs.unit;
 
     if (!requires)
         return false;
@@ -101,6 +103,42 @@ let getRenderer = globalConfigs => {
     };
 
     let draw = {
+        customGraph(func, configs) {
+            configs = configs || {};
+            configs.drawFrom = configs.drawFrom || -globalConfigs.width / globalConfigs.unit;
+            configs.drawTo = configs.drawTo || globalConfigs.width / globalConfigs.unit;
+            configs.step = configs.step || 0.3;
+            let points = [];
+
+            for (let i = configs.drawFrom; i <= configs.drawTo; i += configs.step) {
+                points.push({
+                    x: i,
+                    y: func(i)
+                });
+            }
+
+            draw.curveLine(points);
+        },
+        polynomialGraphToKeep(coefficients, configs) {
+            configs = configs || {};
+            configs.drawFrom = configs.drawFrom || -globalConfigs.width / globalConfigs.unit;
+            configs.drawTo = configs.drawTo || globalConfigs.width / globalConfigs.unit;
+            configs.step = configs.step || 0.3;
+
+            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, x => {
+                let sum = coefficients[0];
+
+                for (let i = 1; i < coefficients.length; i++) {
+                    console.log(coefficients[i]);
+                    sum += Math.pow(x, i) * coefficients[i];
+                }
+
+                return sum;
+            });
+
+            draw.curveLine(points);
+
+        },
         polynomialGraph(coefficients, intercept, configs) {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
@@ -190,22 +228,31 @@ let getRenderer = globalConfigs => {
             configs = configs || {};
 
             configs.color = configs.color || 'black';
-            configs.thickness = configs.thickness || 3;
+            configs.thickness = configs.thickness || 2;
 
             globalConfigs.canvas.context.fillStyle = configs.color;
             globalConfigs.canvas.context.fillRect(0, globalConfigs.height / 2 - configs.thickness / 2, globalConfigs.width, configs.thickness);
             globalConfigs.canvas.context.fillRect(globalConfigs.width / 2 - configs.thickness / 2, 0, configs.thickness, globalConfigs.height);
+
+            globalConfigs.canvas.context.strokeStyle = configs.color;
+            globalConfigs.canvas.context.fillRect(globalConfigs.width / 2 + globalConfigs.defaultUnit - 1, globalConfigs.height / 2 - 8, 3, 16);
+
+            globalConfigs.canvas.context.font = "20px Georgia";
+            globalConfigs.canvas.context.fillText(mathModule.round(globalConfigs.defaultUnit / globalConfigs.unit, 5),
+                globalConfigs.width / 2 + globalConfigs.defaultUnit - 10, globalConfigs.height / 2 + 30);
         },
         clearCanvas() {
             globalConfigs.canvas.context.fillStyle = 'white';
+            globalConfigs.canvas.context.fillRect(0, 0, globalConfigs.width, globalConfigs.height);
 
-            globalConfigs.canvas.context.fillRect(0, 0, globalConfigs.width, globalConfigs.height)
+            globalConfigs.canvas.context.strokeStyle = 'black';
+            globalConfigs.canvas.context.strokeRect(0, 0, globalConfigs.width, globalConfigs.height);
         },
         mapNet(configs) {
             configs = configs || {};
 
             configs.thickness = configs.thickness || 1;
-            configs.measure = configs.measure || globalConfigs.unit;
+            configs.measure = configs.measure || globalConfigs.defaultUnit;
             configs.color = configs.color || 'black';
 
             globalConfigs.canvas.context.fillStyle = configs.color;

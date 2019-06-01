@@ -67,6 +67,10 @@
                     <span id="linear-graph-equation-label"></span>
                 </div>
                 <div>
+                    <input id="show-graph-net-checkbox" type="checkbox" checked>
+                    <span>Show graph net?</span>
+                </div>
+                <div>
                     <input id="show-linear-graph-checkbox" type="checkbox" checked>
                     <span>Show linear graph?</span>
                 </div>
@@ -110,6 +114,7 @@
             configs: {
                 polynomialDegree: 1,
                 showLinearGraphCheckbox: true,
+                showGraphNetCheckbox: true,
                 showExponentialGraphCheckbox: false
             },
             events: {
@@ -272,11 +277,33 @@
     globalData.canvas.element.height = globalData.height;
     globalData.canvas.element.width = globalData.width;
 
-    let rendererModule = getRenderer(globalData);
+    let rendererModule = getRenderer(globalData, mathModule);
 
     globalData.events.subscribe('refreshClientData', () => {
         rendererModule.draw.clearCanvas();
-        rendererModule.draw.mapNet();
+        // rendererModule.draw.customGraph(x => Math.sin(x));
+
+        var text = [
+            x => Math.sin(x),
+            x => Math.cos(x),
+            x => -Math.sin(x),
+            x => -Math.cos(x),
+        ];
+
+        for (let i = 0; i < 5; i++) {
+            text.push(text[0], text[1], text[2], text[3]);
+
+        }
+        var test = mathModule.taylorSeries(text, 6);
+
+        rendererModule.draw.customGraph(test);
+        // rendererModule.draw.customGraph(x => Math.pow(x, 2) * Math.sin(x) * Math.cos(x));
+        // rendererModule.draw.polynomialGraphToKeep();
+
+        if (globalData.configs.showGraphNetCheckbox) {
+            rendererModule.draw.mapNet();
+        }
+
         rendererModule.draw.arrows();
 
         if (globalData.dots.length >= 2) {
@@ -329,6 +356,7 @@
     (function addEventsToOptionElements() {
         let showExponentialGraphCheckbox = document.getElementById('show-exponential-graph-checkbox');
         let showLinearGraphCheckbox = document.getElementById('show-linear-graph-checkbox');
+        let showGraphNetCheckbox = document.getElementById('show-graph-net-checkbox');
 
         showExponentialGraphCheckbox.addEventListener('click', e => {
             globalData.configs.showExponentialGraphCheckbox = e.target.checked;
@@ -339,6 +367,12 @@
             globalData.configs.showLinearGraphCheckbox = e.target.checked;
             globalData.events.emit('refreshClientData');
         });
+
+        showGraphNetCheckbox.addEventListener('click', e => {
+            globalData.configs.showGraphNetCheckbox = e.target.checked;
+            globalData.events.emit('refreshClientData');
+        });
+
     })();
 
     let loadDataset = datasetIndex => {
