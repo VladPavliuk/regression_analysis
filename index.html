@@ -101,6 +101,12 @@
 <script src="/datasets.js"></script>
 
 <script>
+    let copy = toCopy => {
+        if (Array.isArray(toCopy)) {
+            return JSON.parse(JSON.stringify(toCopy));
+        }
+    };
+
     let mathModule = getMath();
     let globalData = {
             canvas: {
@@ -157,22 +163,21 @@
 
                     linearGraphEquation.innerHTML = '';
 
-                    let coefficients = globalData.equations.linear.coefficients;
-                    coefficients.forEach((coefficient, index) => {
-                        let slope = mathModule.round(coefficient, 5);
+                    let coefficients = globalData.equations.linear;
+                    
+                    for (let i = 1; i <= coefficients.length; i++) {
+                        let coefficient = mathModule.round(coefficients[coefficients.length - i], 5);
+                         
                         // let sign = index !== 0 ? `${slope >= 0 ? '+' : '-'}` : '';
 
                         // linearGraphEquation.innerHTML +=
                         //     `${index === 0 ? sign + ' ' : sign}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
 
-                        linearGraphEquation.innerHTML += `${slope > 0 ? '+' : '-'}${Math.abs(slope)}x<sup>${coefficients.length - index}</sup> `
-                    });
-
-                    let intercept = mathModule.round(globalData.equations.linear.intercept, 5);
-                    linearGraphEquation.innerHTML += `${intercept >= 0 ? '+' : '-'} ${Math.abs(intercept)}`;
+                        linearGraphEquation.innerHTML += `${coefficient > 0 ? '+' : '-'}${Math.abs(coefficient)}x<sup>${coefficients.length - i}</sup> `
+                    }
                 }
             },
-            dotsList() {
+            createDotsList() {
                 let dotsListElement = document.getElementById('dots-list').getElementsByTagName('tbody')[0];
                 let dotsAmountElement = document.getElementById('dots-amount-element');
                 dotsAmountElement.innerHTML = globalData.dots.length + (globalData.dots.length > 1 ? ' points' :
@@ -188,8 +193,8 @@
                         deleteCell = document.createElement('td'),
                         deleteButton = document.createElement('button');
 
-                    xInput.value = point.x;
                     xInput.type = 'number';
+                    xInput.value = point.x;
                     xInput.addEventListener('input', e => {
                         globalData.dots[index].x = Number(e.target.value) || 0;
                         globalData.events.emit('refreshClientData');
@@ -197,8 +202,8 @@
                     xCell.appendChild(xInput);
                     row.appendChild(xCell);
 
-                    yInput.value = point.y;
                     yInput.type = 'number';
+                    yInput.value = point.y;
                     yInput.addEventListener('input', e => {
                         globalData.dots[index].y = Number(e.target.value) || 0;
                         globalData.events.emit('refreshClientData');
@@ -218,21 +223,28 @@
                     dotsListElement.appendChild(row);
                 });
             },
+            updateDotsList() {
+                let dotsListElement = document.getElementById('dots-list').getElementsByTagName('tbody')[0];
+                
+                if (globalData.dots.length !== dotsListElement.childNodes.length) {
+                    this.createDotsList();
+                    return;
+                }
+
+                dotsListElement.childNodes.forEach((tableRow, index) => {
+                    var xInput = tableRow.querySelector('tr td:first-child input');
+                    var yInput = tableRow.querySelector('tr td:nth-child(2) input');
+
+                    xInput.value = globalData.dots[index].x;
+                    yInput.value = globalData.dots[index].y;
+                });
+            },
             analysis() {
-                let rSquaredElement = document.getElementById('r-squared-element');
-                let standardErrorElement = document.getElementById('standard-error-element');
+                document.getElementById('standard-error-element')
+                    .innerHTML = globalData.standardError ? `St. Error = ${mathModule.round(globalData.standardError, 6)}` : '';
 
-                if (globalData.standardError) {
-                    standardErrorElement.innerHTML = 'St. Error = ' + mathModule.round(globalData.standardError, 6);
-                } else {
-                    standardErrorElement.innerHTML = '';
-                }
-
-                if (globalData.rSquared) {
-                    rSquaredElement.innerHTML = 'R<sup>2</sup> = ' + mathModule.round(globalData.rSquared, 6);
-                } else {
-                    rSquaredElement.innerHTML = '';
-                }
+                document.getElementById('r-squared-element')
+                    .innerHTML = globalData.rSquared ? `R<sup>2</sup> = ${mathModule.round(globalData.rSquared, 6)}` : '';
             }
         };
 
@@ -294,7 +306,7 @@
             text.push(text[0], text[1], text[2], text[3]);
 
         }
-        var test = mathModule.taylorSeries(text, 6);
+        var test = mathModule.taylorSeries(text, 3);
 
         rendererModule.draw.customGraph(test);
         // rendererModule.draw.customGraph(x => Math.pow(x, 2) * Math.sin(x) * Math.cos(x));
@@ -313,18 +325,10 @@
             if (globalData.configs.showLinearGraphCheckbox) {
                 let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs.polynomialDegree);
 
-                globalData.standardError = mathModule.regressions
-                    .standardError(globalData.dots, x => mathModule.calculatePolynomialFunction(
-                        polynomialData.coefficients,
-                        polynomialData.intercept,
-                        x));
+                globalData.standardError = mathModule.regressions.standardError(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));
+                globalData.rSquared = mathModule.regressions.rSquare(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));
 
-                globalData.rSquared = mathModule.regressions.rSquare(globalData.dots, x => mathModule.calculatePolynomialFunction(
-                    polynomialData.coefficients,
-                    polynomialData.intercept,
-                    x));
-
-                rendererModule.draw.polynomialGraph(polynomialData.coefficients, polynomialData.intercept);
+                rendererModule.draw.polynomialGraph(polynomialData);
                 globalData.equations.linear = polynomialData;
                 // rendererModule.draw.lineGraph(lineData.slope, lineData.intercept);
             }
@@ -336,11 +340,12 @@
         rendererModule.draw.dots(globalData.dots);
 
         showData.options();
-        showData.dotsList();
+        showData.updateDotsList();
         showData.analysis();
         showData.info();
     });
 
+    showData.createDotsList();
     globalData.events.emit('refreshClientData');
 
     (function addEventsToManipulators() {
@@ -350,7 +355,6 @@
             globalData.configs.polynomialDegree = +e.target.value;
             globalData.events.emit('refreshClientData');
         });
-
     })();
 
     (function addEventsToOptionElements() {
@@ -456,6 +460,19 @@
             if (Number.isInteger(clickedDotIndex)) {
                 dotPosition.x = mathModule.round(dotPosition.x, 3);
                 dotPosition.y = mathModule.round(dotPosition.y, 3);
+                
+                let dotsCopy = copy(globalData.dots);
+                dotsCopy.splice(clickedDotIndex, 1);
+
+                let nearestPoint = dotsCopy.sort((prevDot, nextDot) => Math.abs(prevDot.x - dotPosition.x) - Math.abs(nextDot.x - dotPosition.x))[0];
+                let distanceToNearest = nearestPoint.x - dotPosition.x;
+                let deltha = 0.1;
+
+                if (distanceToNearest >= 0 && distanceToNearest < deltha) {
+                    dotPosition.x = dotPosition.x + distanceToNearest + deltha;
+                } else if (distanceToNearest < 0 && distanceToNearest > -deltha) {
+                    dotPosition.x = dotPosition.x + distanceToNearest - deltha;
+                }
 
                 globalData.canvas.element.style.cursor = 'move';
                 globalData.dots[clickedDotIndex] = {

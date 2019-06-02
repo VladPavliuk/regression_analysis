@@ -119,27 +119,7 @@ let getRenderer = (globalConfigs, mathModule) => {
 
             draw.curveLine(points);
         },
-        polynomialGraphToKeep(coefficients, configs) {
-            configs = configs || {};
-            configs.drawFrom = configs.drawFrom || -globalConfigs.width / globalConfigs.unit;
-            configs.drawTo = configs.drawTo || globalConfigs.width / globalConfigs.unit;
-            configs.step = configs.step || 0.3;
-
-            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, x => {
-                let sum = coefficients[0];
-
-                for (let i = 1; i < coefficients.length; i++) {
-                    console.log(coefficients[i]);
-                    sum += Math.pow(x, i) * coefficients[i];
-                }
-
-                return sum;
-            });
-
-            draw.curveLine(points);
-
-        },
-        polynomialGraph(coefficients, intercept, configs) {
+        polynomialGraph(coefficients, configs) {
             configs = configs || {};
             configs.thickness = configs.thickness || 2;
             configs.color = configs.color || 'black';
@@ -147,15 +127,9 @@ let getRenderer = (globalConfigs, mathModule) => {
             configs.drawTo = configs.drawTo || globalConfigs.width / globalConfigs.unit;
             configs.step = configs.step || 0.3;
 
-            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, x => {
-                let sum = 0;
-
-                for (let i = 0; i < coefficients.length; i++) {
-                    sum += coefficients[i] * Math.pow(x, coefficients.length - i);
-                }
-
-                return sum + intercept
-            });
+            let points = calculation.getPointsListByGraph(configs.drawFrom, configs.drawTo, configs.step, 
+                x => coefficients.reduce((acc, coef, i) => acc + coef * Math.pow(x, i), 0));
+        
             draw.curveLine(points);
         },
         lineGraph(slope, intercept, configs) {

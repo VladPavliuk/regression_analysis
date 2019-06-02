@@ -10,7 +10,15 @@ let getMath = () => {
         }
     };
 
-    let getSwappsAmount = list => {
+    let getFactorial = number => {
+        if (number === 0)
+            return 1;
+        return number * getFactorial(number - 1);
+    };
+
+    math.linearAlgebra = {};
+
+    math.linearAlgebra.getSwappsAmount = list => {
         list = copy(list);
         let swapps = 0;
         let isOrderedFlag = false;
@@ -34,13 +42,7 @@ let getMath = () => {
         return swapps;
     };
 
-    let getFactorial = number => {
-        if (number === 0)
-            return 1;
-        return number * getFactorial(number - 1);
-    };
-
-    let getCombinations = list => {
+    math.linearAlgebra.getCombinations = list => {
         list = copy(list);
         let combinations = [];
 
@@ -56,14 +58,14 @@ let getMath = () => {
         return combinations;
     };
 
-    let getMatrixDeterminant = matrix => {
+    math.linearAlgebra.getMatrixDeterminant = matrix => {
         return mathLib.det(matrix);
         let indexes = (new Array(matrix.length)).fill(0).map((item, index) => index);
-        let indexesCombinations = getCombinations(indexes);
+        let indexesCombinations = math.linearAlgebra.getCombinations(indexes);
         let sum = 0;
 
         for (let i = 0; i < indexesCombinations.length; i++) {
-            let sign = Math.pow(-1, getSwappsAmount(indexesCombinations[i]));
+            let sign = Math.pow(-1, math.linearAlgebra.getSwappsAmount(indexesCombinations[i]));
 
             let product = 1;
             for (let j = 0; j < indexesCombinations[i].length; j++) {
@@ -76,7 +78,7 @@ let getMath = () => {
         return sum;
     };
 
-    let getMatrixVectorCombinations = (matrix, vector) => {
+    math.linearAlgebra.getMatrixVectorCombinations = (matrix, vector) => {
         matrix = copy(matrix);
         let res = [];
         let matrixCopy = copy(matrix);
@@ -93,63 +95,21 @@ let getMath = () => {
         return res;
     };
 
-    let getEquationsSystemSolution = (matrix, vector) => {
-        let matrixVectorCombinations = getMatrixVectorCombinations(matrix, vector);
+    math.equations = {};
+
+    math.equations.solveSystem = (matrix, vector) => {
+        let matrixVectorCombinations = math.linearAlgebra.getMatrixVectorCombinations(matrix, vector);
         let solution = [];
-        let delta = getMatrixDeterminant(matrix);
+        let delta = math.linearAlgebra.getMatrixDeterminant(matrix);
 
         for (let i = 0; i < matrixVectorCombinations.length; i++) {
-            solution.push(getMatrixDeterminant(matrixVectorCombinations[i]) / delta);
+            solution.push(math.linearAlgebra.getMatrixDeterminant(matrixVectorCombinations[i]) / delta);
         }
 
         return solution;
     };
 
-    let getPolynomialRegression = (points, degree) => {
-        let sum = new Array(degree + 1).fill(new Array(degree + 2).fill(0));
-        let differentiations = new Array(degree + 1).fill([]);
-
-        points.forEach(point => {
-            let data = [];
-
-            for (let i = 1; i <= degree; i++) {
-                data.push(Math.pow(point.x, i));
-            }
-
-            data.push(1);
-            data.push(-point.y);
-
-            for (let i = 0; i <= degree; i++) {
-                differentiations[i] = data.map(item => 2 * data[i] * item);
-            }
-
-            for (let i = 0; i < differentiations.length; i++) {
-                sum[i] = sum[i].map((x, index) => x + differentiations[i][index]);
-            }
-        });
-
-        let vector = [];
-        for (let i = 0; i < sum.length; i++) {
-            vector.push(-sum[i][sum[i].length - 1]);
-        }
-
-        let matrix = [];
-        for (let i = 0; i < sum.length; i++) {
-            matrix.push(sum[i].slice(0, sum[i].length - 1));
-        }
-
-        return getEquationsSystemSolution(matrix, vector);
-    };
-
-    math.calculatePolynomialFunction = (coefficients, intercept, x) => {
-        let functionValue = intercept;
-
-        coefficients.forEach((coefficient, index) => {
-            functionValue += coefficient * Math.pow(x, coefficients.length - index);
-        });
-
-        return functionValue;
-    };
+    math.calculatePolynomialFunction = (coefficients, x) => coefficients.reduce((acc, coef, i) => acc + coef * Math.pow(x, i), 0);
 
     math.taylorSeries = (derivatives, a) => {
         let taylorPolynomial = [];
@@ -161,15 +121,39 @@ let getMath = () => {
     };
 
     math.regressions = {
-        polynomial(dots, degree) {
-            let graphData = getPolynomialRegression(dots, degree);
-            let intercept = graphData.pop();
-            let coefficients = graphData.reverse();
-
-            return {
-                coefficients,
-                intercept
-            };
+        polynomial(points, degree) {
+            let sum = new Array(degree + 1).fill(new Array(degree + 2).fill(0));
+            let differentiations = new Array(degree + 1).fill([]);
+    
+            points.forEach(point => {
+                let data = [];
+    
+                for (let i = 0; i <= degree; i++) {
+                    data.push(Math.pow(point.x, i));
+                }
+    
+                data.push(-point.y);
+    
+                for (let i = 0; i <= degree; i++) {
+                    differentiations[i] = data.map(item => 2 * data[i] * item);
+                }
+    
+                for (let i = 0; i < differentiations.length; i++) {
+                    sum[i] = sum[i].map((x, index) => x + differentiations[i][index]);
+                }
+            });
+    
+            let vector = [];
+            for (let i = 0; i < sum.length; i++) {
+                vector.push(-sum[i][sum[i].length - 1]);
+            }
+    
+            let matrix = [];
+            for (let i = 0; i < sum.length; i++) {
+                matrix.push(sum[i].slice(0, sum[i].length - 1));
+            }
+    
+            return math.equations.solveSystem(matrix, vector);
         },
         linear(dots) {
             let xAverage = math.getAverage(dots.map(dot => dot.x));
