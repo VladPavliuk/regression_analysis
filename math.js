@@ -59,7 +59,6 @@ let getMath = () => {
     };
 
     math.linearAlgebra.getMatrixDeterminant = matrix => {
-        return mathLib.det(matrix);
         let indexes = (new Array(matrix.length)).fill(0).map((item, index) => index);
         let indexesCombinations = math.linearAlgebra.getCombinations(indexes);
         let sum = 0;

@@ -108,6 +108,35 @@
     };
 
     let mathModule = getMath();
+    var test = mathModule.linearAlgebra.getMatrixDeterminant([
+    [1,	2,	3],
+    [4,	5,	2],
+    [5,	2,	1]
+    ]);
+    console.log(test)
+
+    var test = mathModule.linearAlgebra.getMatrixDeterminant([
+    [0,	2,	3],
+    [1,	5,	2],
+    [0,	2,	1]
+    ]);
+    console.log(test)
+
+    var test = mathModule.linearAlgebra.getMatrixDeterminant([
+    [1,	0,	3],
+    [4,	1,	2],
+    [5,	0,	1]
+    ]);
+    console.log(test)
+
+    var test = mathModule.linearAlgebra.getMatrixDeterminant([
+    [1,	2,	0],
+    [4,	5,	1],
+    [5,	2,	0]
+    ]);
+    console.log(test)
+
+    
     let globalData = {
             canvas: {
                 element: null
@@ -497,11 +526,6 @@
         }
     });
 
-    globalData.canvas.element.addEventListener("wheel", e => {
-        rendererModule.draw.zoom((e.deltaY < 0 ? -1 : 1) * Math.min(1, Math.abs(e.deltaY)));
-        globalData.events.emit('refreshClientData');
-    });
-
     globalData.canvas.element.addEventListener("mouseup", e => {
         clickedDotIndex = false;
 
@@ -545,6 +569,11 @@
         mousePressed = false;
         mouseMoved = false;
     }, false);
+
+    globalData.canvas.element.addEventListener("wheel", e => {
+        rendererModule.draw.zoom((e.deltaY < 0 ? -1 : 1) * Math.min(1, Math.abs(e.deltaY)));
+        globalData.events.emit('refreshClientData');
+    });
 </script>
 </body>
 
