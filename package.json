@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/VladPavliuk/regression_analysis/issues"
   },
-  "homepage": "https://github.com/VladPavliuk/regression_analysis#readme"
+  "homepage": "https://github.com/VladPavliuk/regression_analysis#readme",
+  "dependencies": {
+    "csvtojson": "^2.0.10"
+  }
 }

@@ -121,38 +121,61 @@ let getMath = () => {
     };
 
     math.regressions = {
+        multidimensional(independent, dependent) {
+            if (!Array.isArray(independent)
+                || !Array.isArray(dependent)
+                || !independent[0]) return false;
+
+            let dimensions = independent[0].length,
+                vector = new Array(dimensions).fill(0),
+                matrix = [];
+
+            for (let i = 0; i < dimensions; i++) {
+                matrix.push(new Array(dimensions).fill(0));
+
+                for (let j = 0; j < independent.length; j++) {
+                    vector[i] += 2 * independent[j][i] * dependent[j];
+
+                    for (let k = 0; k < dimensions; k++) {
+                        matrix[i][k] += 2 * independent[j][i] * independent[j][k];
+                    }
+                }
+            }
+
+            return math.equations.solveSystem(matrix, vector);
+        },
         polynomial(points, degree) {
             let sum = new Array(degree + 1).fill(new Array(degree + 2).fill(0));
             let differentiations = new Array(degree + 1).fill([]);
-    
+
             points.forEach(point => {
                 let data = [];
-    
+
                 for (let i = 0; i <= degree; i++) {
                     data.push(Math.pow(point.x, i));
                 }
-    
+
                 data.push(-point.y);
-    
+
                 for (let i = 0; i <= degree; i++) {
                     differentiations[i] = data.map(item => 2 * data[i] * item);
                 }
-    
+
                 for (let i = 0; i < differentiations.length; i++) {
                     sum[i] = sum[i].map((x, index) => x + differentiations[i][index]);
                 }
             });
-    
+
             let vector = [];
             for (let i = 0; i < sum.length; i++) {
                 vector.push(-sum[i][sum[i].length - 1]);
             }
-    
+
             let matrix = [];
             for (let i = 0; i < sum.length; i++) {
                 matrix.push(sum[i].slice(0, sum[i].length - 1));
             }
-    
+
             return math.equations.solveSystem(matrix, vector);
         },
         linear(dots) {

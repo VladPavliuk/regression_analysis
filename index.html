@@ -325,6 +325,22 @@
             if (globalData.configs.showLinearGraphCheckbox) {
                 let polynomialData = mathModule.regressions.polynomial(globalData.dots, globalData.configs.polynomialDegree);
 
+                var independent = [
+                    [1, 1,2],
+                    [1, 2,3],
+                    [1, 4,8],
+                    [1, 7,8]
+                ];
+
+                var dependent = [12,16,17,22];
+
+                console.log(mathModule.regressions.multidimensional(independent, dependent));
+
+                independent = globalData.dots.map(_ => [1, _.x]);
+                dependent = globalData.dots.map(_ => _.y);
+
+                polynomialData = mathModule.regressions.multidimensional(independent, dependent);
+
                 globalData.standardError = mathModule.regressions.standardError(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));
                 globalData.rSquared = mathModule.regressions.rSquare(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));
 
