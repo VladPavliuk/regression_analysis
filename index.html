@@ -308,9 +308,9 @@
         }
         var test = mathModule.taylorSeries(text, 3);
 
-        rendererModule.draw.customGraph(test);
+        //rendererModule.draw.customGraph(test);
         // rendererModule.draw.customGraph(x => Math.pow(x, 2) * Math.sin(x) * Math.cos(x));
-        // rendererModule.draw.polynomialGraphToKeep();
+        //rendererModule.draw.polynomialGraphToKeep();
 
         if (globalData.configs.showGraphNetCheckbox) {
             rendererModule.draw.mapNet();
@@ -339,7 +339,7 @@
                 independent = globalData.dots.map(_ => [1, _.x]);
                 dependent = globalData.dots.map(_ => _.y);
 
-                polynomialData = mathModule.regressions.multidimensional(independent, dependent);
+                //polynomialData = mathModule.regressions.multidimensional(independent, dependent);
 
                 globalData.standardError = mathModule.regressions.standardError(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));
                 globalData.rSquared = mathModule.regressions.rSquare(globalData.dots, x => mathModule.calculatePolynomialFunction(polynomialData, x));

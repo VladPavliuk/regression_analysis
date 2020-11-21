@@ -7,19 +7,14 @@ var staticServe = function (req, res) {
     if (fileLoc == '/')
         fileLoc = '/index.html';
 
-    const csvFilePath='./housing.csv'
+    /*const csvFilePath='./housing.csv'
     const csv=require('csvtojson')
     csv()
         .fromFile(csvFilePath)
         .then((jsonObj)=>{
             console.log(jsonObj.slice(0,1000));
-            /**
-             * [
-             * 	{a:"1", b:"2", c:"3"},
-             * 	{a:"4", b:"5". c:"6"}
-             * ]
-             */
-        })
+            
+        })*/
 
     fs.readFile(__dirname + fileLoc, function (err, data) {
         if (err) {
